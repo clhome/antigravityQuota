@@ -1,0 +1,142 @@
+name: release
+
+# 推送 v* tag 时自动：
+#   1. build      —— 校验 tag 与 package.json 版本一致，测试并打包 VSIX
+#   2. marketplace—— 发布到 VS Code Marketplace（需要 Secret: VSCE_PAT）
+#   3. open-vsx   —— 发布到 Open VSX Registry（需要 Secret: OVSX_TOKEN）
+#   4. github-release —— 创建 GitHub Release 并附上 VSIX
+# 默认分支上未配置对应 Secret 时，该项只打 warning 并跳过，不会让整个流程失败。
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# 默认最小权限；只有创建 Release 的任务单独申请 contents: write
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build VSIX
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Verify tag matches package.json version
+        run: |
+          set -euo pipefail
+          tag_version="${GITHUB_REF_NAME#v}"
+          pkg_version="$(node -p "require('./package.json').version")"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} 与 package.json 版本 ${pkg_version} 不一致"
+            exit 1
+          fi
+          echo "版本校验通过：${pkg_version}"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run tests
+        run: npm test
+
+      - name: Resolve VSIX path
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          echo "VSIX=dist/${name}-${version}.vsix" >> "$GITHUB_ENV"
+
+      - name: Package VSIX
+        run: npm run package -- --out "$VSIX" --no-dependencies
+
+      - name: Verify VSIX exists
+        run: test -f "$VSIX"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: dist/*.vsix
+          if-no-files-found: error
+          retention-days: 14
+
+  marketplace:
+    name: Publish to VS Code Marketplace
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+          path: dist
+
+      - name: Publish
+        if: env.VSCE_PAT != ''
+        run: npx --yes @vscode/vsce@4 publish --packagePath dist/*.vsix --skip-duplicate
+
+      - name: Skip notice
+        if: env.VSCE_PAT == ''
+        run: echo "::warning::未配置 Secret VSCE_PAT，已跳过 VS Code Marketplace 发布"
+
+  open-vsx:
+    name: Publish to Open VSX
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OVSX_PAT: ${{ secrets.OVSX_TOKEN }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+          path: dist
+
+      - name: Publish
+        if: env.OVSX_PAT != ''
+        run: npx --yes ovsx@1 publish --packagePath dist/*.vsix --skip-duplicate
+
+      - name: Skip notice
+        if: env.OVSX_PAT == ''
+        run: echo "::warning::未配置 Secret OVSX_TOKEN，已跳过 Open VSX 发布"
+
+  github-release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+          path: dist
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.vsix --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.vsix \
+              --title "$GITHUB_REF_NAME" --generate-notes
+          fi

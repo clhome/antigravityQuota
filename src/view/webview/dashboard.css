@@ -1,0 +1,220 @@
+/* antigravityQuota - Dashboard 样式（仅使用 VS Code 主题变量） */
+
+:root {
+    --aq-gap: 10px;
+    --aq-radius: 6px;
+}
+
+body {
+    padding: 14px 18px 20px;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background: transparent;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--aq-gap);
+    margin-bottom: 12px;
+}
+
+.brandline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.brand {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    flex: 0 0 auto;
+}
+
+.title {
+    font-size: 1.15em;
+    font-weight: 600;
+    margin: 0;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    border: 1px solid var(--vscode-button-border, transparent);
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-radius: 4px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+.btn:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.btn-secondary {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.btn-secondary:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    font-size: 0.85em;
+}
+
+.chip-label {
+    opacity: 0.8;
+}
+
+.banner {
+    border: 1px solid var(--vscode-inputValidation-warningBorder, #b89500);
+    background: var(--vscode-inputValidation-warningBackground, rgba(184, 149, 0, 0.12));
+    border-radius: var(--aq-radius);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+
+.banner.hidden {
+    display: none;
+}
+
+.banner-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.banner-desc {
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.models {
+    display: flex;
+    flex-direction: column;
+    gap: var(--aq-gap);
+}
+
+.card {
+    border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+    border-inline-start-width: 4px;
+    border-radius: var(--aq-radius);
+    padding: 10px 12px;
+    background: var(--vscode-editorWidget-background, transparent);
+}
+
+.card.level-healthy {
+    border-inline-start-color: #2ea043;
+}
+
+.card.level-warning {
+    border-inline-start-color: #d29922;
+}
+
+.card.level-critical {
+    border-inline-start-color: #f85149;
+}
+
+.card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.model-name {
+    font-weight: 600;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tag {
+    font-size: 0.75em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+}
+
+.model-pct {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--vscode-progressBar-background, rgba(128, 128, 128, 0.25));
+    opacity: 0.35;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.bar-fill {
+    height: 100%;
+    background: currentColor;
+    opacity: 1;
+}
+
+.card.level-healthy .bar-fill {
+    background: #2ea043;
+}
+
+.card.level-warning .bar-fill {
+    background: #d29922;
+}
+
+.card.level-critical .bar-fill {
+    background: #f85149;
+}
+
+.card-foot {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82em;
+    opacity: 0.85;
+}
+
+.empty {
+    opacity: 0.75;
+    padding: 8px 2px;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    font-size: 0.8em;
+    opacity: 0.7;
+}

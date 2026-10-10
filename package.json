@@ -1,0 +1,240 @@
+{
+  "name": "antigravity-quota",
+  "displayName": "antigravityQuota",
+  "icon": "assets/icon.png",
+  "description": "Minimal local-only quota monitor for Antigravity. No credentials, no OAuth, no external network.",
+  "version": "2.1.52",
+  "publisher": "clhome",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "antigravity",
+    "ai",
+    "quota",
+    "monitor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clhome/antigravityQuota.git"
+  },
+  "bugs": {
+    "url": "https://github.com/clhome/antigravityQuota/issues"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "antigravityQuota.open",
+        "title": "Open Quota Dashboard",
+        "category": "Antigravity",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "antigravityQuota.refresh",
+        "title": "Refresh Quota",
+        "category": "Antigravity",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "antigravityQuota.showLogs",
+        "title": "Show Logs",
+        "category": "Antigravity",
+        "icon": "$(output)"
+      },
+      {
+        "command": "antigravityQuota.purgeLegacyData",
+        "title": "Purge Legacy Plaintext Credentials",
+        "category": "Antigravity",
+        "icon": "$(trash)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "antigravityQuota.open",
+        "key": "ctrl+shift+q",
+        "mac": "cmd+shift+q"
+      }
+    ],
+    "configuration": {
+      "title": "antigravityQuota",
+      "properties": {
+        "antigravityQuota.refreshInterval": {
+          "type": "number",
+          "default": 300,
+          "minimum": 60,
+          "maximum": 3600,
+          "description": "Quota refresh interval in seconds (60-3600). Values below 60 are clamped to 60 to avoid rate limiting."
+        },
+        "antigravityQuota.logLevel": {
+          "type": "string",
+          "default": "info",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "enumDescriptions": [
+            "Show all logs including debug information",
+            "Show info, warnings and errors",
+            "Show warnings and errors only",
+            "Show errors only"
+          ],
+          "description": "Log level for the output channel."
+        },
+        "antigravityQuota.notificationEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a notification when a model quota is exhausted or running low."
+        },
+        "antigravityQuota.statusBarFormat": {
+          "type": "string",
+          "default": "standard",
+          "enum": [
+            "icon",
+            "dot",
+            "percent",
+            "compact",
+            "namePercent",
+            "standard"
+          ],
+          "enumDescriptions": [
+            "Icon only - just the rocket",
+            "Status dot only",
+            "Percentage only",
+            "Dot + percentage",
+            "Model name + percentage",
+            "Dot + model name + percentage (default)"
+          ],
+          "description": "Format of the status bar display."
+        },
+        "antigravityQuota.warningThreshold": {
+          "type": "number",
+          "default": 30,
+          "minimum": 5,
+          "maximum": 80,
+          "description": "Warning threshold percentage (5-80). Quota below this shows yellow."
+        },
+        "antigravityQuota.criticalThreshold": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Critical threshold percentage (1-50). Quota below this shows red."
+        },
+        "antigravityQuota.dataMasked": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mask the account name and email in the dashboard and status bar tooltip."
+        },
+        "antigravityQuota.language": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "en",
+            "zh-cn",
+            "zh-tw",
+            "ja",
+            "ko",
+            "de",
+            "fr",
+            "es",
+            "pt-br",
+            "ru",
+            "it",
+            "tr",
+            "pl",
+            "cs",
+            "ar",
+            "vi"
+          ],
+          "enumDescriptions": [
+            "Follow VS Code language",
+            "English",
+            "简体中文",
+            "繁體中文",
+            "日本語",
+            "한국어",
+            "Deutsch",
+            "Français",
+            "Español",
+            "Português (Brasil)",
+            "Русский",
+            "Italiano",
+            "Türkçe",
+            "Polski",
+            "Čeština",
+            "العربية",
+            "Tiếng Việt"
+          ],
+          "description": "Language for the extension UI."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "antigravityQuota.open",
+          "when": "true"
+        },
+        {
+          "command": "antigravityQuota.refresh",
+          "when": "true"
+        },
+        {
+          "command": "antigravityQuota.showLogs",
+          "when": "true"
+        },
+        {
+          "command": "antigravityQuota.purgeLegacyData",
+          "when": "true"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run typecheck && npm run lint && npm run build:prod",
+    "compile": "npm run lint:webview && npm run build",
+    "build": "node scripts/build.js",
+    "build:prod": "node scripts/build.js --production",
+    "watch": "node scripts/build.js --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext ts,js",
+    "lint:fix": "eslint src --ext ts,js --fix",
+    "lint:webview": "eslint src/view/webview/*.js",
+    "package": "vsce package",
+    "publish:vsce": "vsce publish",
+    "publish:ovsx": "ovsx publish",
+    "test": "jest",
+    "pretest": "npm run compile",
+    "release": "bash scripts/release.sh",
+    "release:publish": "bash scripts/release.sh --publish"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.27.2",
+    "eslint": "^8.57.0",
+    "jest": "^30.2.0",
+    "ovsx": "^1.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.3.0"
+  }
+}
