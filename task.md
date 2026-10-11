@@ -191,3 +191,33 @@ npx jest              7 suites / 74 tests / all passed
 - [x] T06 单元测试与构建门禁（`npm run lint`, `npm run build`, `npm test`）
 - [x] T07 本地运行验证与临时文件清理
 
+---
+
+# task：UI 文案更新与出品方/开源仓库信息展示
+
+## 背景与需求
+1. 状态栏悬浮提示（Tooltip）底部红框内文案修改为「点击图标进入设置」，同时右下角显示「衢州御风科技有限公司出品」。
+2. 设置页（Webview 仪表盘）右下角显示「衢州御风科技有限公司出品」，下一行显示 GitHub 图标 + 开源仓库地址 `https://github.com/clhome/antigravityQuota`。
+
+## 拆解清单
+- [x] T08 多语言字典与常量更新（`zh-cn.ts`、其他 15 种语言文件、`constants.ts`）
+- [x] T09 状态栏悬浮 Tooltip 升级（`status_bar.ts`，右下角出品方与文案修改）
+- [x] T10 设置页 Webview 结构与样式升级（`dashboard.ts`, `dashboard.css`, `dashboard.js`）
+- [x] T11 安全不变量测试调整与多语言一致性测试（`security_invariants.test.ts`, `i18n.test.ts`）
+- [x] T12 构建与全量测试门禁验证（`lint`, `build`, `test`）
+
+## 执行结果
+- **状态栏悬停 Tooltip**：
+  - 底部操作文案更新为「点击图标进入设置」（斜体呈现）。
+  - Tooltip 右下角新增显示「衢州御风科技有限公司出品」。
+  - 16 种语言字典同步支持对应的操作提示与出品方信息。
+- **设置页（Webview 仪表盘）**：
+  - 底部区域采用两栏弹性排版，左侧保留更新时间与本地读取标识。
+  - 右下角第一行显示「衢州御风科技有限公司出品」，第二行显示内嵌 GitHub 矢量 SVG 图标及开源项目地址 `https://github.com/clhome/antigravityQuota`。
+  - 链接具备 VS Code 风格悬停下划线动效与高亮，且扩展宿主提供 `vscode.env.openExternal` 兜底，确保在系统浏览器正常打开。
+- **门禁与测试**：
+  - `npm run typecheck`（tsc 无类型错误）
+  - `npm run lint` & `npm run lint:webview`（0 error, 0 warning）
+  - `npm run build`（打包成功）
+  - `npm test`（7 个测试套件 / 77 个单元测试全绿）
+

@@ -114,3 +114,9 @@ export const COMMANDS = {
 
 /** 日志/输出通道名称 */
 export const OUTPUT_CHANNEL_NAME = EXTENSION_ID;
+
+/** 官方项目主页与出品信息 */
+export const PROJECT_METADATA = {
+    PRODUCER: '衢州御风科技有限公司出品',
+    REPO_URL: 'https://github.com/clhome/antigravityQuota',
+} as const;

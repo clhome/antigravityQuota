@@ -96,3 +96,7 @@ npm test
 
 见 [`docs/PUBLISH.md`](docs/PUBLISH.md)：一键发布脚本 `npm run release`，
 以及推送 `v*` tag 后由 GitHub Actions 自动发布到 VS Code Marketplace 与 Open VSX。
+
+---
+
+衢州御风科技有限公司出品

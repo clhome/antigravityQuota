@@ -13,6 +13,8 @@
     const metaRoot = document.getElementById('meta');
     const updatedRoot = document.getElementById('updated');
     const localOnly = document.querySelector('.local-only');
+    const producer = document.querySelector('.producer');
+    const repoLink = document.getElementById('repo-link');
     const refreshBtn = document.getElementById('refresh');
     const logsBtn = document.getElementById('logs');
     const title = document.querySelector('.title');
@@ -250,6 +252,9 @@
         if (localOnly) {
             localOnly.textContent = tr('dashboard.localOnly');
         }
+        if (producer) {
+            producer.textContent = tr('common.producer');
+        }
         document.documentElement.lang = payload.locale || 'en';
         document.documentElement.dir = payload.dir === 'rtl' ? 'rtl' : 'ltr';
         renderMeta(payload);
@@ -257,6 +262,16 @@
         renderGroups(payload);
         renderModels(payload);
         updatedRoot.textContent = tr('dashboard.updated') + ': ' + (payload.updatedAt || '-');
+    }
+
+    if (repoLink) {
+        repoLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            vscode.postMessage({
+                type: 'openUrl',
+                url: repoLink.getAttribute('href'),
+            });
+        });
     }
 
     refreshBtn.addEventListener('click', function () {

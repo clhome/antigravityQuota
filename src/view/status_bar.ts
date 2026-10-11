@@ -186,9 +186,9 @@ export class StatusBarController implements vscode.Disposable {
         group: QuotaGroupInfo,
         config: ExtensionConfig,
     ): vscode.MarkdownString {
-        const md = new vscode.MarkdownString();
+        const md = new vscode.MarkdownString('', true);
         md.isTrusted = false;
-        md.supportHtml = false;
+        md.supportHtml = true;
 
         md.appendMarkdown(`**🚀 ${escapeMarkdown(group.displayName)}**\n\n`);
 
@@ -209,7 +209,7 @@ export class StatusBarController implements vscode.Disposable {
             }
         }
 
-        md.appendMarkdown(`\n---\n*${t('statusBar.tooltip')}*`);
+        md.appendMarkdown(`\n---\n*${t('statusBar.tooltip')}*\n\n<div align="right">${t('common.producer')}</div>`);
         return md;
     }
 
@@ -229,9 +229,9 @@ export class StatusBarController implements vscode.Disposable {
         config: ExtensionConfig,
         lowest: ModelQuotaInfo,
     ): vscode.MarkdownString {
-        const md = new vscode.MarkdownString();
+        const md = new vscode.MarkdownString('', true);
         md.isTrusted = false;
-        md.supportHtml = false;
+        md.supportHtml = true;
 
         md.appendMarkdown(`**🚀 ${t('dashboard.title')}**\n\n`);
         md.appendMarkdown(`${t('statusBar.lowest')}: ${escapeMarkdown(this.safeLabel(lowest, config))} (${Math.floor(lowest.remainingPercentage ?? 0)}%)\n\n`);
@@ -248,7 +248,7 @@ export class StatusBarController implements vscode.Disposable {
             md.appendMarkdown(`\n**${t('statusBar.credits')}**: ${Math.round(snapshot.promptCredits.available)} / ${Math.round(snapshot.promptCredits.monthly)}\n`);
         }
 
-        md.appendMarkdown(`\n---\n*${t('statusBar.tooltip')}*`);
+        md.appendMarkdown(`\n---\n*${t('statusBar.tooltip')}*\n\n<div align="right">${t('common.producer')}</div>`);
         return md;
     }
 

@@ -36,14 +36,19 @@ function read(file: string): string {
 }
 
 describe('安全不变量', () => {
-    it('源码中不存在任何外部网络主机', () => {
-        const forbidden = ['googleapis.com', 'accounts.google.com', 'githubusercontent.com', 'github.com'];
+    it('源码中不存在任何外部网络主机（除本项目官方开源主页外）', () => {
+        const forbidden = ['googleapis.com', 'accounts.google.com', 'githubusercontent.com'];
+        const allowedRepoHost = 'github.com/clhome/antigravityQuota';
         for (const file of sourceFiles) {
             const content = read(file);
             for (const host of forbidden) {
                 expect({ file: path.relative(PROJECT_DIR, file), host, found: content.includes(host) })
                     .toEqual({ file: path.relative(PROJECT_DIR, file), host, found: false });
             }
+            // 确保除本项目自身开源仓库主页展示外，不包含任何第三方 github 域名引用或外联
+            const stripped = content.split(allowedRepoHost).join('');
+            expect({ file: path.relative(PROJECT_DIR, file), host: 'github.com', found: stripped.includes('github.com') })
+                .toEqual({ file: path.relative(PROJECT_DIR, file), host: 'github.com', found: false });
         }
     });
 

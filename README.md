@@ -45,24 +45,24 @@ is reported.
 
 ## Settings
 
-| Setting | Default | Description |
-| --- | --- | --- |
-| `antigravityQuota.refreshInterval` | `300` | Refresh interval in seconds. **Hard floor of 60s**, ceiling 3600 |
-| `antigravityQuota.statusBarFormat` | `standard` | icon / dot / percent / compact / namePercent / standard |
-| `antigravityQuota.warningThreshold` | `30` | Warning threshold (%) |
-| `antigravityQuota.criticalThreshold` | `10` | Critical threshold (%) |
-| `antigravityQuota.notificationEnabled` | `true` | Show quota notifications |
-| `antigravityQuota.dataMasked` | `false` | Mask account name and email |
-| `antigravityQuota.logLevel` | `info` | Log level |
-| `antigravityQuota.language` | `auto` | UI language (16 locales) |
+| Setting                                | Default    | Description                                                      |
+| -------------------------------------- | ---------- | ---------------------------------------------------------------- |
+| `antigravityQuota.refreshInterval`     | `300`      | Refresh interval in seconds. **Hard floor of 60s**, ceiling 3600 |
+| `antigravityQuota.statusBarFormat`     | `standard` | icon / dot / percent / compact / namePercent / standard          |
+| `antigravityQuota.warningThreshold`    | `30`       | Warning threshold (%)                                            |
+| `antigravityQuota.criticalThreshold`   | `10`       | Critical threshold (%)                                           |
+| `antigravityQuota.notificationEnabled` | `true`     | Show quota notifications                                         |
+| `antigravityQuota.dataMasked`          | `false`    | Mask account name and email                                      |
+| `antigravityQuota.logLevel`            | `info`     | Log level                                                        |
+| `antigravityQuota.language`            | `auto`     | UI language (16 locales)                                         |
 
 ## Commands
 
-| Command | Command ID | Description |
-| --- | --- | --- |
-| `Antigravity: Open Quota Dashboard` | `antigravityQuota.open` | Open the dashboard (`Ctrl/Cmd+Shift+Q`) |
-| `Antigravity: Refresh Quota` | `antigravityQuota.refresh` | Refresh now (60s cooldown) |
-| `Antigravity: Show Logs` | `antigravityQuota.showLogs` | Open the output channel |
+| Command                                           | Command ID                         | Description                                                                 |
+| ------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
+| `Antigravity: Open Quota Dashboard`               | `antigravityQuota.open`            | Open the dashboard (`Ctrl/Cmd+Shift+Q`)                                     |
+| `Antigravity: Refresh Quota`                      | `antigravityQuota.refresh`         | Refresh now (60s cooldown)                                                  |
+| `Antigravity: Show Logs`                          | `antigravityQuota.showLogs`        | Open the output channel                                                     |
 | `Antigravity: Purge Legacy Plaintext Credentials` | `antigravityQuota.purgeLegacyData` | Scan for and delete leftovers written by older Antigravity Cockpit versions |
 
 ## Security
@@ -99,3 +99,7 @@ Requires Node.js 20+.
 
 See [`docs/PUBLISH.md`](docs/PUBLISH.md) (Chinese): one-command `npm run release`, plus GitHub
 Actions publishing to the VS Code Marketplace and Open VSX on every `v*` tag.
+
+---
+
+Produced by Quzhou Yufeng Technology Co., Ltd.
