@@ -1,5 +1,5 @@
 {
-  "name": "antigravity-quota",
+  "name": "antigravity-quota-yufeng",
   "displayName": "antigravityQuota",
   "icon": "assets/icon.png",
   "description": "Minimal local-only quota monitor for Antigravity. No credentials, no OAuth, no external network.",

@@ -5,10 +5,10 @@
 | 项 | 值 |
 | --- | --- |
 | 发布者（publisher） | `clhome` |
-| 扩展名（`package.json.name`） | `antigravity-quota` |
-| 扩展 ID | `clhome.antigravity-quota` |
-| 市场地址 | https://marketplace.visualstudio.com/items?itemName=clhome.antigravity-quota |
-| Open VSX | https://open-vsx.org/extension/clhome/antigravity-quota |
+| 扩展名（`package.json.name`） | `antigravity-quota-yufeng` |
+| 扩展 ID | `clhome.antigravity-quota-yufeng` |
+| 市场地址 | https://marketplace.visualstudio.com/items?itemName=clhome.antigravity-quota-yufeng |
+| Open VSX | https://open-vsx.org/extension/clhome/antigravity-quota-yufeng |
 | 仓库 | https://github.com/clhome/antigravityQuota |
 
 > `name` 必须是小写无空格的标识（市场用它拼扩展 ID 与 URL）；面向用户的展示名是

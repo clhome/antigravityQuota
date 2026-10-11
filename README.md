@@ -14,10 +14,10 @@ entirely**. What remains is a status bar item plus a minimal quota dashboard.
 
 ## Install
 
-- **Marketplace**: [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=clhome.antigravity-quota)
-  · [Open VSX](https://open-vsx.org/extension/clhome/antigravity-quota)
+- **Marketplace**: [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=clhome.antigravity-quota-yufeng)
+  · [Open VSX](https://open-vsx.org/extension/clhome/antigravity-quota-yufeng)
 - **Offline**: download the `.vsix` from [Releases](https://github.com/clhome/antigravityQuota/releases)
-  and run `code --install-extension antigravity-quota-<version>.vsix`
+  and run `code --install-extension antigravity-quota-yufeng-<version>.vsix`
 
 ## Features
 

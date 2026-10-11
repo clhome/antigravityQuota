@@ -13,10 +13,10 @@
 
 ## 安装
 
-- **市场**：[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=clhome.antigravity-quota)
-  · [Open VSX](https://open-vsx.org/extension/clhome/antigravity-quota)
+- **市场**：[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=clhome.antigravity-quota-yufeng)
+  · [Open VSX](https://open-vsx.org/extension/clhome/antigravity-quota-yufeng)
 - **离线**：从 [Releases](https://github.com/clhome/antigravityQuota/releases) 下载 `.vsix` 后
-  `code --install-extension antigravity-quota-<version>.vsix`
+  `code --install-extension antigravity-quota-yufeng-<version>.vsix`
 
 ## 功能
 
