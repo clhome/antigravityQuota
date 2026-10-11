@@ -135,7 +135,7 @@ export class StatusBarController implements vscode.Disposable {
         }
 
         item.backgroundColor = undefined;
-        item.tooltip = this.buildGroupTooltip(group, snapshot, config);
+        item.tooltip = this.buildGroupTooltip(group, config);
     }
 
     private updateFallbackSingle(snapshot: QuotaSnapshot, config: ExtensionConfig): void {
@@ -181,10 +181,9 @@ export class StatusBarController implements vscode.Disposable {
         return config.dataMasked ? maskText(label) : label;
     }
 
-    /** 生成分类专属的富文本 Tooltip */
+    /** 生成分类专属的富文本 Tooltip（仅保留核心配额表格与精巧进度条） */
     private buildGroupTooltip(
         group: QuotaGroupInfo,
-        snapshot: QuotaSnapshot,
         config: ExtensionConfig,
     ): vscode.MarkdownString {
         const md = new vscode.MarkdownString();
@@ -192,40 +191,22 @@ export class StatusBarController implements vscode.Disposable {
         md.supportHtml = false;
 
         md.appendMarkdown(`**🚀 ${escapeMarkdown(group.displayName)}**\n\n`);
-        if (group.description) {
-            md.appendMarkdown(`*${escapeMarkdown(group.description)}*\n\n`);
-        }
 
         if (group.buckets.length > 0) {
             md.appendMarkdown('| 限制类型 (Limit) | 剩余 (Remaining) | 重置时间 (Reset) |\n');
-            md.appendMarkdown('| :--- | ---: | ---: |\n');
+            md.appendMarkdown('| :--- | :--- | ---: |\n');
             for (const b of group.buckets) {
-                const pct = b.remainingPercentage !== undefined ? `${Math.floor(b.remainingPercentage)}%` : '-';
-                const reset = b.timeUntilResetFormatted || '-';
                 const bucketName = this.formatBucketName(b);
-                md.appendMarkdown(`| ${escapeMarkdown(bucketName)} | ${pct} | ${escapeMarkdown(reset)} |\n`);
-            }
-            md.appendMarkdown('\n');
-
-            // 补充各桶的详细说明（如 "You have used some of your weekly limit..."）
-            for (const b of group.buckets) {
-                if (b.description) {
-                    md.appendMarkdown(`> 💡 **${escapeMarkdown(this.formatBucketName(b))}**: ${escapeMarkdown(b.description)}\n\n`);
+                const reset = b.timeUntilResetFormatted || '-';
+                let remainingCol = '-';
+                if (b.remainingPercentage !== undefined) {
+                    const pct = b.remainingPercentage;
+                    const icon = this.iconFor(pct, config);
+                    const bar = renderProgressBar(pct, 10);
+                    remainingCol = `${icon} ${bar} ${Math.floor(pct)}%`;
                 }
+                md.appendMarkdown(`| ${escapeMarkdown(bucketName)} | ${remainingCol} | ${escapeMarkdown(reset)} |\n`);
             }
-        }
-
-        if (group.models.length > 0) {
-            md.appendMarkdown(`---\n**包含模型 (${group.models.length}):**\n\n`);
-            for (const model of group.models) {
-                const pct = model.remainingPercentage !== undefined ? `${Math.floor(model.remainingPercentage)}%` : '-';
-                const reset = model.timeUntilResetFormatted || '-';
-                md.appendMarkdown(`- **${escapeMarkdown(this.safeLabel(model, config))}**: ${pct} (重置: ${escapeMarkdown(reset)})\n`);
-            }
-        }
-
-        if (snapshot.promptCredits) {
-            md.appendMarkdown(`\n---\n**${t('statusBar.credits')}**: ${Math.round(snapshot.promptCredits.available)} / ${Math.round(snapshot.promptCredits.monthly)}\n`);
         }
 
         md.appendMarkdown(`\n---\n*${t('statusBar.tooltip')}*`);
@@ -235,10 +216,10 @@ export class StatusBarController implements vscode.Disposable {
     private formatBucketName(bucket: QuotaBucketInfo): string {
         const name = bucket.displayName || bucket.bucketId;
         if (bucket.window === 'weekly' || name.toLowerCase().includes('weekly')) {
-            return `每周配额 (${name})`;
+            return '每周配额 (Weekly Limit Remaining)';
         }
         if (bucket.window === '5h' || name.toLowerCase().includes('five hour')) {
-            return `5小时配额 (${name})`;
+            return '5小时配额 (Five Hour Limit Remaining)';
         }
         return name;
     }
@@ -283,4 +264,12 @@ export function maskText(text: string): string {
         return '***';
     }
     return `${text.slice(0, 2)}***${text.slice(-2)}`;
+}
+
+/** 渲染紧凑字符进度条（如 █████░░░░░） */
+export function renderProgressBar(percentage: number, total: number = 10): string {
+    const clamped = Math.max(0, Math.min(100, Number.isFinite(percentage) ? percentage : 0));
+    const filled = Math.round((clamped / 100) * total);
+    const empty = total - filled;
+    return '█'.repeat(filled) + '░'.repeat(empty);
 }
