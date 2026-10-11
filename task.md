@@ -171,3 +171,23 @@ npx jest              7 suites / 74 tests / all passed
 2. 创建 Open VSX 命名空间并生成 token：`npx ovsx create-namespace clhome -p <token>`。
 3. 仓库 Secrets 配置 `VSCE_PAT` 与 `OVSX_TOKEN`。
 4. 提交当前改动后执行 `npm run release -- 1.0.0`（若要首个市场版本从 1.0.0 开始）。
+
+---
+
+# task：支持按分类展示（Gemini、Claude/GPT）及 Weekly/5h 详细配额
+
+## 背景与需求
+- 当前状态栏仅显示单一最低模型（Claude），用户希望分别独立显示两类：`Gemini` 与 `Claude/GPT`。
+- 鼠标悬停（Hover）在各个分类上时，显示对应的 `Weekly Limit` 和 `5-Hour Limit` 剩余比例、倒计时与重置时间。
+- 仪表盘同步展示官方设置页级别的分类配额卡片（包含 Weekly、5h 详细剩余、重置时间与描述）。
+- 本地数据源：新增调用本机 Antigravity Language Server 的 `RetrieveUserQuotaSummary` 接口，无凭证、无外部网络。
+
+## 拆解清单
+- [x] T01 接口与类型定义（`constants.ts`, `types.ts`）
+- [x] T02 数据获取与解码（`quota_client.ts` 支持 `RetrieveUserQuotaSummary`）
+- [x] T03 状态栏升级（`status_bar.ts` 双独立项 + 悬停 Tooltip 呈现 Weekly/5h 详情）
+- [x] T04 仪表盘面板升级（`dashboard.ts`, `dashboard.js`, `dashboard.css`）
+- [x] T05 国际化更新（`i18n.ts`）
+- [x] T06 单元测试与构建门禁（`npm run lint`, `npm run build`, `npm test`）
+- [x] T07 本地运行验证与临时文件清理
+

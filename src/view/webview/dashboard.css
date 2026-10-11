@@ -211,6 +211,133 @@ body {
     padding: 8px 2px;
 }
 
+/* ============ 分组与限制窗口（Groups & Buckets） ============ */
+
+.groups {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.group-card {
+    border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+    border-inline-start-width: 4px;
+    border-radius: var(--aq-radius);
+    padding: 12px 14px;
+    background: var(--vscode-editorWidget-background, transparent);
+}
+
+.group-card.level-healthy {
+    border-inline-start-color: #2ea043;
+}
+
+.group-card.level-warning {
+    border-inline-start-color: #d29922;
+}
+
+.group-card.level-critical {
+    border-inline-start-color: #f85149;
+}
+
+.group-head {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.2));
+}
+
+.group-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.group-title {
+    font-size: 1.05em;
+    font-weight: 600;
+}
+
+.group-desc {
+    font-size: 0.82em;
+    opacity: 0.75;
+}
+
+.bucket-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bucket-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    background: var(--vscode-editor-inactiveSelectionBackground, rgba(128, 128, 128, 0.08));
+}
+
+.bucket-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.bucket-name {
+    font-size: 0.95em;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.bucket-desc {
+    font-size: 0.82em;
+    opacity: 0.8;
+    line-height: 1.35;
+}
+
+.bucket-stat {
+    flex: 0 0 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.bucket-pct {
+    font-size: 1.1em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.bucket-row.level-healthy .bucket-pct,
+.bucket-row.level-healthy .bar-fill {
+    color: #2ea043;
+    background: #2ea043;
+}
+
+.bucket-row.level-warning .bucket-pct,
+.bucket-row.level-warning .bar-fill {
+    color: #d29922;
+    background: #d29922;
+}
+
+.bucket-row.level-critical .bucket-pct,
+.bucket-row.level-critical .bar-fill {
+    color: #f85149;
+    background: #f85149;
+}
+
+.bucket-stat .bar {
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.bucket-reset {
+    font-size: 0.78em;
+    opacity: 0.75;
+    white-space: nowrap;
+}
+
 .footer {
     display: flex;
     justify-content: space-between;

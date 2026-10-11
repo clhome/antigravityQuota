@@ -122,6 +122,67 @@ describe('LocalQuotaClient.decode', () => {
             }
         }
     });
+    it('parses quota groups when summaryData is provided', () => {
+        const summary = {
+            response: {
+                groups: [
+                    {
+                        displayName: 'Gemini Models',
+                        description: 'Gemini desc',
+                        buckets: [
+                            {
+                                bucketId: 'gemini-weekly',
+                                displayName: 'Weekly Limit Remaining',
+                                window: 'weekly',
+                                remainingFraction: 0.54,
+                                resetTime: '2999-01-01T00:00:00Z',
+                            },
+                            {
+                                bucketId: 'gemini-5h',
+                                displayName: 'Five Hour Limit Remaining',
+                                window: '5h',
+                                remainingFraction: 0.70,
+                                resetTime: '2999-01-01T00:00:00Z',
+                            },
+                        ],
+                    },
+                    {
+                        displayName: 'Claude and GPT models',
+                        buckets: [
+                            {
+                                bucketId: '3p-weekly',
+                                displayName: 'Weekly Limit Remaining',
+                                window: 'weekly',
+                                remainingFraction: 0.10,
+                                resetTime: '2999-01-01T00:00:00Z',
+                            },
+                        ],
+                    },
+                ],
+            },
+        };
+
+        const snapshot = LocalQuotaClient.decode(validResponse(), summary);
+        expect(snapshot.groups).toHaveLength(2);
+
+        const geminiGroup = snapshot.groups[0];
+        expect(geminiGroup.groupId).toBe('gemini');
+        expect(geminiGroup.buckets).toHaveLength(2);
+        expect(geminiGroup.lowestBucket?.remainingPercentage).toBe(54);
+        expect(geminiGroup.models.some(m => m.label.includes('Gemini'))).toBe(true);
+
+        const claudeGroup = snapshot.groups[1];
+        expect(claudeGroup.groupId).toBe('claude_gpt');
+        expect(claudeGroup.lowestBucket?.remainingPercentage).toBe(10);
+        expect(claudeGroup.models.some(m => m.label.includes('Claude'))).toBe(true);
+    });
+
+    it('falls back to model-derived groups when summaryData is omitted', () => {
+        const snapshot = LocalQuotaClient.decode(validResponse());
+        expect(snapshot.groups.length).toBeGreaterThan(0);
+        expect(snapshot.groups.some(g => g.groupId === 'gemini')).toBe(true);
+        expect(snapshot.groups.some(g => g.groupId === 'claude_gpt')).toBe(true);
+    });
 });
 
 describe('createOfflineSnapshot', () => {
@@ -129,6 +190,7 @@ describe('createOfflineSnapshot', () => {
         const snapshot = createOfflineSnapshot('offline!');
         expect(snapshot.isConnected).toBe(false);
         expect(snapshot.models).toEqual([]);
+        expect(snapshot.groups).toEqual([]);
         expect(snapshot.errorMessage).toBe('offline!');
     });
 });

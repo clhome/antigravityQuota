@@ -8,6 +8,7 @@
     const vscode = acquireVsCodeApi();
 
     const banner = document.getElementById('banner');
+    const groupsRoot = document.getElementById('groups');
     const modelsRoot = document.getElementById('models');
     const metaRoot = document.getElementById('meta');
     const updatedRoot = document.getElementById('updated');
@@ -96,6 +97,89 @@
         banner.appendChild(retry);
     }
 
+    function renderGroups(payload) {
+        groupsRoot.textContent = '';
+        if (!payload.groups || payload.groups.length === 0) {
+            return;
+        }
+
+        for (const group of payload.groups) {
+            const card = document.createElement('div');
+            card.className = 'group-card level-' + group.level;
+
+            const head = document.createElement('div');
+            head.className = 'group-head';
+
+            const titleWrap = document.createElement('div');
+            titleWrap.className = 'group-title-wrap';
+
+            const title = document.createElement('span');
+            title.className = 'group-title';
+            title.appendChild(text(group.displayName));
+            titleWrap.appendChild(title);
+
+            if (group.description) {
+                const desc = document.createElement('div');
+                desc.className = 'group-desc';
+                desc.appendChild(text(group.description));
+                titleWrap.appendChild(desc);
+            }
+            head.appendChild(titleWrap);
+            card.appendChild(head);
+
+            const bucketList = document.createElement('div');
+            bucketList.className = 'bucket-list';
+
+            for (const bucket of group.buckets) {
+                const bRow = document.createElement('div');
+                bRow.className = 'bucket-row level-' + bucket.level;
+
+                const bInfo = document.createElement('div');
+                bInfo.className = 'bucket-info';
+
+                const bName = document.createElement('div');
+                bName.className = 'bucket-name';
+                bName.appendChild(text(bucket.displayName));
+                bInfo.appendChild(bName);
+
+                if (bucket.description) {
+                    const bDesc = document.createElement('div');
+                    bDesc.className = 'bucket-desc';
+                    bDesc.appendChild(text(bucket.description));
+                    bInfo.appendChild(bDesc);
+                }
+                bRow.appendChild(bInfo);
+
+                const bStat = document.createElement('div');
+                bStat.className = 'bucket-stat';
+
+                const bPct = document.createElement('span');
+                bPct.className = 'bucket-pct';
+                bPct.appendChild(text(bucket.percentage + '%'));
+                bStat.appendChild(bPct);
+
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                const fill = document.createElement('div');
+                fill.className = 'bar-fill';
+                fill.style.width = Math.max(0, Math.min(100, bucket.percentage)) + '%';
+                bar.appendChild(fill);
+                bStat.appendChild(bar);
+
+                const bReset = document.createElement('div');
+                bReset.className = 'bucket-reset';
+                bReset.appendChild(text(tr('dashboard.resetIn') + ': ' + bucket.resetIn));
+                bStat.appendChild(bReset);
+
+                bRow.appendChild(bStat);
+                bucketList.appendChild(bRow);
+            }
+
+            card.appendChild(bucketList);
+            groupsRoot.appendChild(card);
+        }
+    }
+
     function renderModels(payload) {
         modelsRoot.textContent = '';
         if (!payload.models || payload.models.length === 0) {
@@ -170,6 +254,7 @@
         document.documentElement.dir = payload.dir === 'rtl' ? 'rtl' : 'ltr';
         renderMeta(payload);
         renderBanner(payload);
+        renderGroups(payload);
         renderModels(payload);
         updatedRoot.textContent = tr('dashboard.updated') + ': ' + (payload.updatedAt || '-');
     }

@@ -47,6 +47,48 @@ export interface ModelQuotaInfo {
     tagTitle?: string;
 }
 
+/** 配额桶信息（Weekly / 5h 等限制窗口） */
+export interface QuotaBucketInfo {
+    /** 桶标识，例如 "gemini-weekly", "3p-5h" */
+    bucketId: string;
+    /** 显示名称，例如 "Weekly Limit Remaining" / "Five Hour Limit Remaining" */
+    displayName: string;
+    /** 详细描述 */
+    description?: string;
+    /** 时间窗口，如 "weekly" | "5h" */
+    window: 'weekly' | '5h' | string;
+    /** 剩余比例 (0-1) */
+    remainingFraction?: number;
+    /** 剩余百分比 (0-100) */
+    remainingPercentage?: number;
+    /** 重置时间 */
+    resetTime: Date;
+    /** 距离重置的毫秒数 */
+    timeUntilReset: number;
+    /** 格式化的重置倒计时 */
+    timeUntilResetFormatted: string;
+    /** 格式化的重置时间显示 */
+    resetTimeDisplay: string;
+    /** 重置时间是否有效 */
+    resetTimeValid?: boolean;
+}
+
+/** 配额分类分组信息（如 Gemini Models、Claude and GPT models） */
+export interface QuotaGroupInfo {
+    /** 分组标识，如 "gemini" | "claude_gpt" */
+    groupId: string;
+    /** 显示名称，如 "Gemini Models" | "Claude and GPT models" */
+    displayName: string;
+    /** 分组描述 */
+    description?: string;
+    /** 包含的配额桶（通常为 weekly 和 5h） */
+    buckets: QuotaBucketInfo[];
+    /** 该分组下的最低配额桶（短板） */
+    lowestBucket?: QuotaBucketInfo;
+    /** 属于该分组的具体模型列表 */
+    models: ModelQuotaInfo[];
+}
+
 /** 配额快照 */
 export interface QuotaSnapshot {
     /** 时间戳 */
@@ -57,6 +99,8 @@ export interface QuotaSnapshot {
     userInfo?: UserInfo;
     /** 模型列表 */
     models: ModelQuotaInfo[];
+    /** 分类分组配额列表（如 Gemini Models、Claude and GPT models） */
+    groups: QuotaGroupInfo[];
     /** 连接状态 */
     isConnected: boolean;
     /** 错误信息 */
@@ -149,6 +193,33 @@ export interface UserStatus {
         upgradeSubscriptionUri?: string;
         upgradeSubscriptionText?: string;
     };
+}
+
+/** 原始配额桶 */
+export interface RawQuotaBucket {
+    bucketId?: string;
+    displayName?: string;
+    description?: string;
+    window?: string;
+    remainingFraction?: number;
+    resetTime?: string;
+}
+
+/** 原始配额分组 */
+export interface RawQuotaGroup {
+    displayName?: string;
+    description?: string;
+    buckets?: RawQuotaBucket[];
+}
+
+/** 服务端配额汇总响应 */
+export interface ServerUserQuotaSummaryResponse {
+    response?: {
+        groups?: RawQuotaGroup[];
+        description?: string;
+    };
+    message?: string;
+    code?: string;
 }
 
 /** 服务端用户状态响应 */

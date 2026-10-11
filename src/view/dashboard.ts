@@ -22,6 +22,26 @@ export interface DashboardMessageTarget {
     onShowLogs: () => void;
 }
 
+interface DashboardBucketPayload {
+    bucketId: string;
+    displayName: string;
+    description?: string;
+    window: string;
+    percentage: number;
+    level: 'healthy' | 'warning' | 'critical';
+    resetIn: string;
+    resetAt: string;
+}
+
+interface DashboardGroupPayload {
+    groupId: string;
+    displayName: string;
+    description?: string;
+    buckets: DashboardBucketPayload[];
+    lowestPercentage: number;
+    level: 'healthy' | 'warning' | 'critical';
+}
+
 interface DashboardModelPayload {
     label: string;
     modelId: string;
@@ -39,6 +59,7 @@ interface DashboardPayload {
     updatedAt: string;
     locale: string;
     dir: 'ltr' | 'rtl';
+    groups: DashboardGroupPayload[];
     models: DashboardModelPayload[];
     promptCredits?: {
         available: number;
@@ -158,6 +179,32 @@ export class DashboardPanel implements vscode.Disposable {
     }
 
     private buildPayload(snapshot: QuotaSnapshot, config: ExtensionConfig): DashboardPayload {
+        const groups: DashboardGroupPayload[] = (snapshot.groups || []).map(group => {
+            const buckets: DashboardBucketPayload[] = group.buckets.map(b => {
+                const pct = b.remainingPercentage ?? 100;
+                return {
+                    bucketId: b.bucketId,
+                    displayName: b.displayName,
+                    description: b.description,
+                    window: b.window,
+                    percentage: Math.round(pct * 100) / 100,
+                    level: resolveQuotaLevel(pct, config.warningThreshold, config.criticalThreshold),
+                    resetIn: b.timeUntilResetFormatted,
+                    resetAt: b.resetTimeDisplay,
+                };
+            });
+
+            const lowestPct = group.lowestBucket?.remainingPercentage ?? 100;
+            return {
+                groupId: group.groupId,
+                displayName: group.displayName,
+                description: group.description,
+                buckets,
+                lowestPercentage: Math.round(lowestPct * 100) / 100,
+                level: resolveQuotaLevel(lowestPct, config.warningThreshold, config.criticalThreshold),
+            };
+        });
+
         const models: DashboardModelPayload[] = snapshot.models.map(model => {
             const percentage = model.remainingPercentage ?? 0;
             return {
@@ -187,6 +234,7 @@ export class DashboardPanel implements vscode.Disposable {
             updatedAt: snapshot.timestamp.toLocaleTimeString(),
             locale: i18n.getLocale(),
             dir: i18n.isRtl() ? 'rtl' : 'ltr',
+            groups,
             models,
             promptCredits: snapshot.promptCredits
                 ? {
@@ -240,6 +288,7 @@ export class DashboardPanel implements vscode.Disposable {
     </header>
     <section id="meta" class="meta"></section>
     <section id="banner" class="banner hidden"></section>
+    <section id="groups" class="groups"></section>
     <section id="models" class="models"></section>
     <footer class="footer">
         <span id="updated"></span>
