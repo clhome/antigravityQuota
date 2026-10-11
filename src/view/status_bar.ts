@@ -209,7 +209,7 @@ export class StatusBarController implements vscode.Disposable {
             }
         }
 
-        md.appendMarkdown(`\n---\n*${t('statusBar.tooltip')}*\n\n<div align="right">${t('common.producer')}</div>`);
+        md.appendMarkdown(`\n---\n\n<table width="100%"><tr><td align="left"><em>${t('statusBar.tooltip')}</em></td><td align="right">${t('common.producer')}</td></tr></table>`);
         return md;
     }
 
@@ -248,7 +248,7 @@ export class StatusBarController implements vscode.Disposable {
             md.appendMarkdown(`\n**${t('statusBar.credits')}**: ${Math.round(snapshot.promptCredits.available)} / ${Math.round(snapshot.promptCredits.monthly)}\n`);
         }
 
-        md.appendMarkdown(`\n---\n*${t('statusBar.tooltip')}*\n\n<div align="right">${t('common.producer')}</div>`);
+        md.appendMarkdown(`\n---\n\n<table width="100%"><tr><td align="left"><em>${t('statusBar.tooltip')}</em></td><td align="right">${t('common.producer')}</td></tr></table>`);
         return md;
     }
 
