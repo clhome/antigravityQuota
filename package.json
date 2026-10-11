@@ -3,7 +3,7 @@
   "displayName": "antigravityQuota",
   "icon": "assets/icon.png",
   "description": "Minimal local-only quota monitor for Antigravity. No credentials, no OAuth, no external network.",
-  "version": "2.1.52",
+  "version": "1.0.0",
   "publisher": "clhome",
   "license": "Apache-2.0",
   "engines": {
