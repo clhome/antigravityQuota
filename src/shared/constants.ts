@@ -49,14 +49,33 @@ export const API_ENDPOINTS = {
 
 /** 目标进程名称映射（白名单，禁止外部值拼入命令） */
 export const PROCESS_NAMES = {
-    windows: 'language_server_windows_x64.exe',
-    darwin_arm: 'language_server_macos_arm',
-    darwin_x64: 'language_server_macos',
-    linux: 'language_server_linux',
+    windows: 'agy.exe',
+    windows_legacy: 'language_server_windows_x64.exe',
+    darwin_arm: 'agy',
+    darwin_arm_legacy: 'language_server_macos_arm',
+    darwin_x64: 'agy',
+    darwin_x64_legacy: 'language_server_macos',
+    linux: 'agy',
+    linux_legacy: 'language_server_linux',
 } as const;
 
+/** 各平台优先探测的主候选进程名与回落候选进程名列表 */
+export const PLATFORM_PROCESS_CANDIDATES: Record<'win32' | 'darwin' | 'linux', readonly string[]> = {
+    win32: ['agy.exe', 'language_server_windows_x64.exe'],
+    darwin: ['agy', 'language_server_macos_arm', 'language_server_macos'],
+    linux: ['agy', 'language_server_linux'],
+};
+
 /** 允许的进程名白名单 */
-export const ALLOWED_PROCESS_NAMES: ReadonlySet<string> = new Set(Object.values(PROCESS_NAMES));
+export const ALLOWED_PROCESS_NAMES: ReadonlySet<string> = new Set<string>([
+    ...Object.values(PROCESS_NAMES),
+    'agy.exe',
+    'agy',
+    'language_server_windows_x64.exe',
+    'language_server_macos_arm',
+    'language_server_macos',
+    'language_server_linux',
+]);
 
 /** 配置键名 */
 export const CONFIG_KEYS = {

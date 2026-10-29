@@ -252,6 +252,8 @@ export interface EnvironmentScanResult {
     connectPort: number;
     /** CSRF Token */
     csrfToken: string;
+    /** 通信协议 */
+    protocol?: 'http' | 'https';
 }
 
 /** 扫描诊断信息 */

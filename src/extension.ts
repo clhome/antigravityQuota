@@ -97,10 +97,10 @@ async function bootSystems(): Promise<void> {
             return;
         }
 
-        quotaClient.engage(info.connectPort, info.csrfToken);
+        quotaClient.engage(info.connectPort, info.csrfToken, info.protocol);
         systemOnline = true;
         connectRetryCount = 0;
-        logger.info(`Connected to Antigravity language server on port ${info.connectPort}`);
+        logger.info(`Connected to Antigravity language server on port ${info.connectPort} via ${info.protocol ?? 'http'}`);
 
         poller.start(configService.getRefreshIntervalMs());
         await refreshQuota();

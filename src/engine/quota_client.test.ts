@@ -185,6 +185,22 @@ describe('LocalQuotaClient.decode', () => {
     });
 });
 
+describe('LocalQuotaClient engagement', () => {
+    it('supports engaging with http or https protocol', () => {
+        const client = new LocalQuotaClient();
+        expect(client.isEngaged()).toBe(false);
+
+        client.engage(54364, '2c23fbdd-de82-49f8-ae11-9904c7a49504', 'http');
+        expect(client.isEngaged()).toBe(true);
+
+        client.disengage();
+        expect(client.isEngaged()).toBe(false);
+
+        client.engage(54364, '2c23fbdd-de82-49f8-ae11-9904c7a49504', 'https');
+        expect(client.isEngaged()).toBe(true);
+    });
+});
+
 describe('createOfflineSnapshot', () => {
     it('returns a disconnected snapshot with the given error', () => {
         const snapshot = createOfflineSnapshot('offline!');

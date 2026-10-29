@@ -54,16 +54,20 @@ function sanitizeToken(token: string | undefined): string | null {
 export class WindowsStrategy implements PlatformStrategy {
     /**
      * 判断命令行是否属于 Antigravity 进程。
-     * 必须同时满足：--extension_server_port、--csrf_token、--app_data_dir antigravity。
+     * 需满足：
+     *  1. 包含端口或 Hub 参数：--hub-port 或 --extension_server_port 或 --hub
+     *  2. 包含 CSRF Token：--csrf_token
+     *  3. 属于 antigravity 目录：--app_data_dir[=\s]+antigravity\b
      */
     private isAntigravityProcess(commandLine: string): boolean {
-        if (!commandLine.includes('--extension_server_port')) {
+        const hasPortArg = commandLine.includes('--hub-port') || commandLine.includes('--extension_server_port') || commandLine.includes('--hub');
+        if (!hasPortArg) {
             return false;
         }
         if (!commandLine.includes('--csrf_token')) {
             return false;
         }
-        return /--app_data_dir\s+antigravity\b/i.test(commandLine);
+        return /--app_data_dir[=\s]+antigravity\b/i.test(commandLine);
     }
 
     getProcessListCommand(processName: string): string {
@@ -117,7 +121,7 @@ export class WindowsStrategy implements PlatformStrategy {
                     continue;
                 }
 
-                const portMatch = commandLine.match(/--extension_server_port[=\s]+(\d+)/);
+                const portMatch = commandLine.match(/--(?:hub-port|extension_server_port)[=\s]+(\d+)/i);
                 const tokenMatch = commandLine.match(/--csrf_token[=\s]+([a-f0-9-]+)/i);
                 const csrfToken = sanitizeToken(tokenMatch?.[1]);
                 if (!csrfToken) {
@@ -165,11 +169,11 @@ export class WindowsStrategy implements PlatformStrategy {
 
     getErrorMessages(): { processNotFound: string; commandNotAvailable: string; requirements: string[] } {
         return {
-            processNotFound: 'language_server process not found',
+            processNotFound: 'language_server / agy process not found',
             commandNotAvailable: 'PowerShell command failed; please check system permissions',
             requirements: [
                 'Antigravity is running',
-                'language_server_windows_x64.exe process is running',
+                'agy.exe or language_server process is running',
                 'PowerShell Get-NetTCPConnection is available (Windows 8+)',
             ],
         };
@@ -177,7 +181,7 @@ export class WindowsStrategy implements PlatformStrategy {
 
     getDiagnosticCommand(): string {
         const utf8Header = '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; ';
-        return `chcp 65001 >nul && powershell -NoProfile -NonInteractive -Command "${utf8Header}Get-Process | Where-Object { $_.ProcessName -match 'language|antigravity' } | Select-Object Id,ProcessName,Path | Format-Table -AutoSize"`;
+        return `chcp 65001 >nul && powershell -NoProfile -NonInteractive -Command "${utf8Header}Get-Process | Where-Object { $_.ProcessName -match 'agy|language|antigravity' } | Select-Object Id,ProcessName,Path | Format-Table -AutoSize"`;
     }
 }
 
@@ -218,13 +222,14 @@ export class UnixStrategy implements PlatformStrategy {
     }
 
     private isAntigravityProcess(commandLine: string): boolean {
-        if (!commandLine.includes('--extension_server_port')) {
+        const hasPortArg = commandLine.includes('--hub-port') || commandLine.includes('--extension_server_port') || commandLine.includes('--hub');
+        if (!hasPortArg) {
             return false;
         }
         if (!commandLine.includes('--csrf_token')) {
             return false;
         }
-        return /--app_data_dir\s+antigravity\b/i.test(commandLine);
+        return /--app_data_dir[=\s]+antigravity\b/i.test(commandLine);
     }
 
     getProcessListCommand(processName: string): string {
@@ -259,7 +264,7 @@ export class UnixStrategy implements PlatformStrategy {
                 continue;
             }
 
-            const portMatch = cmd.match(/--extension_server_port[=\s]+(\d+)/);
+            const portMatch = cmd.match(/--(?:hub-port|extension_server_port)[=\s]+(\d+)/i);
             const tokenMatch = cmd.match(/--csrf_token[=\s]+([a-zA-Z0-9-]+)/i);
             const csrfToken = sanitizeToken(tokenMatch?.[1]);
 
@@ -360,7 +365,7 @@ export class UnixStrategy implements PlatformStrategy {
     }
 
     getDiagnosticCommand(): string {
-        return "ps aux | grep -E 'language|antigravity' | grep -v grep";
+        return "ps aux | grep -E 'agy|language|antigravity' | grep -v grep";
     }
 }
 

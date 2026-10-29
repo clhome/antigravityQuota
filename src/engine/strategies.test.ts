@@ -13,6 +13,21 @@ describe('Process Detection Strategies', () => {
             expect(isAntigravityProcess(cmd)).toBe(true);
         });
 
+        it('should identify a new-version agy.exe process with --hub-port and equals', () => {
+            const cmd = 'C:\\Users\\user\\.gemini\\bin\\agy.exe --hub --hub-port=54364 --app_data_dir=antigravity --csrf_token=2c23fbdd-de82-49f8-ae11-9904c7a49504';
+            expect(isAntigravityProcess(cmd)).toBe(true);
+
+            const parsed = strategy.parseProcessInfo(JSON.stringify([{
+                ProcessId: 12248,
+                CommandLine: cmd,
+            }]));
+            expect(parsed).toEqual([{
+                pid: 12248,
+                extensionPort: 54364,
+                csrfToken: '2c23fbdd-de82-49f8-ae11-9904c7a49504',
+            }]);
+        });
+
         it('should reject process missing extension_server_port', () => {
             const cmd = 'C:\\Path\\to\\language_server.exe --csrf_token abc-123 --app_data_dir antigravity';
             expect(isAntigravityProcess(cmd)).toBe(false);
@@ -46,6 +61,19 @@ describe('Process Detection Strategies', () => {
             expect(isAntigravityProcess(cmd)).toBe(true);
         });
 
+        it('should identify a new-version agy process with --hub-port on Unix', () => {
+            const cmd = '/home/user/.gemini/bin/agy --hub --hub-port=54364 --app_data_dir=antigravity --csrf_token=abc-123';
+            expect(isAntigravityProcess(cmd)).toBe(true);
+
+            const stdout = `12248 1000 ${cmd}`;
+            const parsed = strategy.parseProcessInfo(stdout);
+            expect(parsed).toEqual([{
+                pid: 12248,
+                extensionPort: 54364,
+                csrfToken: 'abc-123',
+            }]);
+        });
+
         it('should reject invalid app_data_dir', () => {
             const cmd = '/path/to/language_server --extension_server_port 53125 --csrf_token abc-123 --app_data_dir=wrong';
             expect(isAntigravityProcess(cmd)).toBe(false);
@@ -65,6 +93,10 @@ describe('Process Detection Strategies', () => {
         it('accepts only whitelisted process names', () => {
             expect(win.getProcessListCommand('language_server_windows_x64.exe'))
                 .toContain('language_server_windows_x64.exe');
+            expect(win.getProcessListCommand('agy.exe'))
+                .toContain('agy.exe');
+            expect(unix.getProcessListCommand('agy'))
+                .toContain('agy');
         });
 
         it('refuses to build a port command from an invalid pid', () => {

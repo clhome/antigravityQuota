@@ -13,11 +13,12 @@
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as http from 'http';
 import * as https from 'https';
 import * as process from 'process';
 import { WindowsStrategy, UnixStrategy } from './strategies';
 import { logger } from '../shared/log_service';
-import { API_ENDPOINTS, PROCESS_NAMES, TIMING } from '../shared/constants';
+import { API_ENDPOINTS, PLATFORM_PROCESS_CANDIDATES, TIMING } from '../shared/constants';
 import { isValidCsrfToken, isValidPort } from '../shared/env_guard';
 import { EnvironmentScanResult, PlatformStrategy, ProcessInfo, ScanDiagnostics } from '../shared/types';
 
@@ -31,6 +32,7 @@ const MAX_COMMAND_OUTPUT = TIMING.MAX_COMMAND_OUTPUT_BYTES;
 export class ProcessHunter {
     private strategy: PlatformStrategy;
     private targetProcess: string;
+    private targetProcesses: readonly string[];
     private lastDiagnostics: ScanDiagnostics = {
         scan_method: 'unknown',
         target_process: '',
@@ -43,18 +45,19 @@ export class ProcessHunter {
 
         if (process.platform === 'win32') {
             this.strategy = new WindowsStrategy();
-            this.targetProcess = PROCESS_NAMES.windows;
+            this.targetProcesses = PLATFORM_PROCESS_CANDIDATES.win32;
+            this.targetProcess = this.targetProcesses[0];
         } else if (process.platform === 'darwin') {
             this.strategy = new UnixStrategy('darwin');
-            this.targetProcess = process.arch === 'arm64'
-                ? PROCESS_NAMES.darwin_arm
-                : PROCESS_NAMES.darwin_x64;
+            this.targetProcesses = PLATFORM_PROCESS_CANDIDATES.darwin;
+            this.targetProcess = this.targetProcesses[0];
         } else {
             this.strategy = new UnixStrategy('linux');
-            this.targetProcess = PROCESS_NAMES.linux;
+            this.targetProcesses = PLATFORM_PROCESS_CANDIDATES.linux;
+            this.targetProcess = this.targetProcesses[0];
         }
 
-        logger.debug(`Target process: ${this.targetProcess}`);
+        logger.debug(`Target processes: ${this.targetProcesses.join(', ')}`);
     }
 
     /**
@@ -88,7 +91,7 @@ export class ProcessHunter {
         let powershellTimeoutRetried = false;
         this.lastDiagnostics = {
             scan_method: 'process_name',
-            target_process: this.targetProcess,
+            target_process: this.targetProcesses.join(', '),
             attempts: maxAttempts,
             found_candidates: 0,
         };
@@ -96,57 +99,59 @@ export class ProcessHunter {
         for (let i = 0; i < maxAttempts; i++) {
             logger.debug(`Attempt ${i + 1}/${maxAttempts} (by process name)...`);
 
-            try {
-                const cmd = this.strategy.getProcessListCommand(this.targetProcess);
-                const { stdout, stderr } = await execAsync(cmd, {
-                    timeout: TIMING.PROCESS_CMD_TIMEOUT_MS,
-                    maxBuffer: MAX_COMMAND_OUTPUT,
-                });
+            for (const targetName of this.targetProcesses) {
+                this.targetProcess = targetName;
+                try {
+                    const cmd = this.strategy.getProcessListCommand(targetName);
+                    const { stdout, stderr } = await execAsync(cmd, {
+                        timeout: TIMING.PROCESS_CMD_TIMEOUT_MS,
+                        maxBuffer: MAX_COMMAND_OUTPUT,
+                    });
 
-                if (stderr && stderr.trim()) {
-                    logger.warn(`Command stderr: ${stderr.substring(0, 500)}`);
-                }
-
-                if (!stdout || !stdout.trim()) {
-                    logger.debug('Command returned empty output, process may not be running');
-                    continue;
-                }
-
-                const candidates = this.strategy.parseProcessInfo(stdout);
-                if (candidates.length > 0) {
-                    logger.info(`Found ${candidates.length} candidate process(es)`);
-                    this.lastDiagnostics.found_candidates = candidates.length;
-
-                    for (const info of candidates) {
-                        logger.info(`Checking process PID=${info.pid}, extPort=${info.extensionPort}`);
-                        const result = await this.verifyAndConnect(info);
-                        if (result) {
-                            return result;
-                        }
+                    if (stderr && stderr.trim()) {
+                        logger.warn(`Command stderr: ${stderr.substring(0, 500)}`);
                     }
-                    logger.warn('All candidates failed verification in this attempt');
-                }
-            } catch (e) {
-                const error = e instanceof Error ? e : new Error(String(e));
-                const errorMsg = error.message.toLowerCase();
-                logger.error(`Attempt ${i + 1} failed: ${error.message}`);
 
-                if (process.platform === 'win32' && this.strategy instanceof WindowsStrategy) {
-                    if (errorMsg.includes('cannot be loaded because running scripts is disabled') ||
-                        errorMsg.includes('executionpolicy') ||
-                        errorMsg.includes('禁止运行脚本')) {
-                        logger.error('PowerShell execution policy may be blocking scripts. Try: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned');
-                    }
-                    if (errorMsg.includes('rpc server') || errorMsg.includes('wmi') || errorMsg.includes('invalid class')) {
-                        logger.error('WMI service may not be running. Try: net start winmgmt');
-                    }
-                    if (!powershellTimeoutRetried &&
-                        (errorMsg.includes('timeout') || errorMsg.includes('timed out') || errorMsg.includes('超时'))) {
-                        logger.warn('PowerShell command timed out (likely cold start), retrying after warm-up...');
-                        powershellTimeoutRetried = true;
-                        i--;
-                        await this.delay(3000);
+                    if (!stdout || !stdout.trim()) {
                         continue;
+                    }
+
+                    const candidates = this.strategy.parseProcessInfo(stdout);
+                    if (candidates.length > 0) {
+                        logger.info(`Found ${candidates.length} candidate process(es) for ${targetName}`);
+                        this.lastDiagnostics.found_candidates = candidates.length;
+
+                        for (const info of candidates) {
+                            logger.info(`Checking process PID=${info.pid}, extPort=${info.extensionPort}`);
+                            const result = await this.verifyAndConnect(info);
+                            if (result) {
+                                return result;
+                            }
+                        }
+                        logger.warn(`All candidates for ${targetName} failed verification in this attempt`);
+                    }
+                } catch (e) {
+                    const error = e instanceof Error ? e : new Error(String(e));
+                    const errorMsg = error.message.toLowerCase();
+                    logger.error(`Attempt ${i + 1} (${targetName}) failed: ${error.message}`);
+
+                    if (process.platform === 'win32' && this.strategy instanceof WindowsStrategy) {
+                        if (errorMsg.includes('cannot be loaded because running scripts is disabled') ||
+                            errorMsg.includes('executionpolicy') ||
+                            errorMsg.includes('禁止运行脚本')) {
+                            logger.error('PowerShell execution policy may be blocking scripts. Try: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned');
+                        }
+                        if (errorMsg.includes('rpc server') || errorMsg.includes('wmi') || errorMsg.includes('invalid class')) {
+                            logger.error('WMI service may not be running. Try: net start winmgmt');
+                        }
+                        if (!powershellTimeoutRetried &&
+                            (errorMsg.includes('timeout') || errorMsg.includes('timed out') || errorMsg.includes('超时'))) {
+                            logger.warn('PowerShell command timed out (likely cold start), retrying after warm-up...');
+                            powershellTimeoutRetried = true;
+                            i--;
+                            await this.delay(3000);
+                            break;
+                        }
                     }
                 }
             }
@@ -210,21 +215,45 @@ export class ProcessHunter {
             return null;
         }
 
-        const ports = await this.identifyPorts(info.pid);
-        logger.debug(`Listening ports: ${ports.join(', ')}`);
-        this.lastDiagnostics.ports = ports;
-
-        if (ports.length > 0) {
-            const validPort = await this.verifyConnection(ports, info.csrfToken);
-            this.lastDiagnostics.verified_port = validPort ?? null;
-            this.lastDiagnostics.verification_success = Boolean(validPort);
-
-            if (validPort) {
-                logger.info(`Connection verified on port ${validPort}`);
+        // 若命令行中已显式携带合法端口，优先直接验证（秒级响应，避免 PowerShell 冷启动与状态查询报错）
+        if (isValidPort(info.extensionPort)) {
+            const directVerified = await this.verifyConnection([info.extensionPort], info.csrfToken);
+            if (directVerified) {
+                this.lastDiagnostics.ports = [info.extensionPort];
+                this.lastDiagnostics.verified_port = directVerified.port;
+                this.lastDiagnostics.verification_success = true;
+                logger.info(`Connection verified on port ${directVerified.port} (${directVerified.protocol.toUpperCase()})`);
                 return {
                     extensionPort: info.extensionPort,
-                    connectPort: validPort,
+                    connectPort: directVerified.port,
                     csrfToken: info.csrfToken,
+                    protocol: directVerified.protocol,
+                };
+            }
+        }
+
+        const ports = await this.identifyPorts(info.pid);
+        logger.debug(`Listening ports: ${ports.join(', ')}`);
+
+        // 将命令行解析出的端口与操作系统监听端口合并去重
+        const candidatePorts = Array.from(new Set(
+            info.extensionPort > 0 ? [info.extensionPort, ...ports] : ports,
+        )).filter(isValidPort);
+
+        this.lastDiagnostics.ports = candidatePorts;
+
+        if (candidatePorts.length > 0) {
+            const verified = await this.verifyConnection(candidatePorts, info.csrfToken);
+            this.lastDiagnostics.verified_port = verified?.port ?? null;
+            this.lastDiagnostics.verification_success = Boolean(verified);
+
+            if (verified) {
+                logger.info(`Connection verified on port ${verified.port} (${verified.protocol.toUpperCase()})`);
+                return {
+                    extensionPort: info.extensionPort,
+                    connectPort: verified.port,
+                    csrfToken: info.csrfToken,
+                    protocol: verified.protocol,
                 };
             }
         }
@@ -234,13 +263,13 @@ export class ProcessHunter {
 
     private async runDiagnostics(): Promise<void> {
         logger.warn('All scan attempts failed, running diagnostics...');
-        logger.info(`Target process name: ${this.targetProcess}`);
+        logger.info(`Target process names: ${this.targetProcesses.join(', ')}`);
         logger.info(`Platform: ${process.platform}, Arch: ${process.arch}`);
 
         if (process.platform === 'win32') {
             logger.info('Windows troubleshooting tips:');
             logger.info('  1. Ensure Antigravity is running');
-            logger.info('  2. Check language_server_windows_x64.exe in Task Manager');
+            logger.info('  2. Check agy.exe or language_server_windows_x64.exe in Task Manager');
             logger.info('  3. Restart Antigravity');
         }
 
@@ -258,7 +287,7 @@ export class ProcessHunter {
             if (stdout && stdout.trim()) {
                 logger.info(`Related processes found:\n${sanitize(stdout).substring(0, 2000)}`);
             } else {
-                logger.warn('No related processes found (language_server/antigravity)');
+                logger.warn('No related processes found (language_server/agy/antigravity)');
             }
 
             if (stderr && stderr.trim()) {
@@ -289,23 +318,40 @@ export class ProcessHunter {
         }
     }
 
-    private async verifyConnection(ports: number[], token: string): Promise<number | null> {
+    private async verifyConnection(ports: number[], token: string): Promise<{ port: number; protocol: 'http' | 'https' } | null> {
         for (const port of ports) {
-            if (await this.pingPort(port, token)) {
-                return port;
+            const protocol = await this.pingPort(port, token);
+            if (protocol) {
+                return { port, protocol };
             }
         }
         return null;
     }
 
-    /** 探测端口是否为可用的 Antigravity language server（仅回环地址） */
-    private pingPort(port: number, token: string): Promise<boolean> {
-        return new Promise(resolve => {
-            if (!isValidPort(port) || !isValidCsrfToken(token)) {
-                resolve(false);
-                return;
-            }
+    /** 探测端口是否为可用的 Antigravity 服务（仅回环地址，自适应 HTTP 与 HTTPS） */
+    private async pingPort(port: number, token: string): Promise<'http' | 'https' | null> {
+        if (!isValidPort(port) || !isValidCsrfToken(token)) {
+            return null;
+        }
 
+        // 优先探测 HTTP（新版 agy 原生支持，零开销快速响应）
+        const isHttp = await this.probeProtocol(port, token, false);
+        if (isHttp) {
+            return 'http';
+        }
+
+        // 回落探测 HTTPS（兼容旧版自签名服务）
+        const isHttps = await this.probeProtocol(port, token, true);
+        if (isHttps) {
+            return 'https';
+        }
+
+        return null;
+    }
+
+    private probeProtocol(port: number, token: string, useHttps: boolean): Promise<boolean> {
+        return new Promise(resolve => {
+            const client = useHttps ? https : http;
             const options: https.RequestOptions = {
                 hostname: LOCAL_HOST,
                 port,
@@ -316,14 +362,12 @@ export class ProcessHunter {
                     'X-Codeium-Csrf-Token': token,
                     'Connect-Protocol-Version': '1',
                 },
-                // 本地 language server 使用自签名证书；连接固定为 127.0.0.1，
-                // 且不发送任何长期凭证（仅 csrf token，由本机进程自持）。
                 rejectUnauthorized: false,
                 timeout: TIMING.PROCESS_CMD_TIMEOUT_MS,
                 agent: false, // 绕过代理，直接连接 loopback
             };
 
-            const req = https.request(options, res => {
+            const req = client.request(options, res => {
                 const ok = res.statusCode === 200;
                 res.resume(); // 丢弃响应体，释放 socket
                 resolve(ok);
@@ -333,8 +377,12 @@ export class ProcessHunter {
                 req.destroy();
                 resolve(false);
             });
-            req.write(JSON.stringify({ wrapper_data: {} }));
-            req.end();
+            try {
+                req.write(JSON.stringify({ wrapper_data: {} }));
+                req.end();
+            } catch {
+                resolve(false);
+            }
         });
     }
 

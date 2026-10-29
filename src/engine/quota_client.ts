@@ -17,6 +17,7 @@
  *  - 解析时对字段做类型与范围校验，坏数据只降级不清洗执行路径。
  */
 
+import * as http from 'http';
 import * as https from 'https';
 import { API_ENDPOINTS, TIMING, QUOTA_THRESHOLDS } from '../shared/constants';
 import { logger } from '../shared/log_service';
@@ -50,15 +51,17 @@ const REQUEST_METADATA = {
 export class LocalQuotaClient {
     private port = 0;
     private token = '';
+    private protocol: 'http' | 'https' = 'http';
 
     /** 绑定连接参数 */
-    engage(port: number, token: string): void {
+    engage(port: number, token: string, protocol: 'http' | 'https' = 'http'): void {
         this.port = assertValidPort(port);
         if (!isValidCsrfToken(token)) {
             throw new Error('Invalid CSRF token');
         }
         this.token = token;
-        logger.info(`[QuotaClient] Engaged on 127.0.0.1:${this.port}`);
+        this.protocol = protocol;
+        logger.info(`[QuotaClient] Engaged on ${this.protocol}://127.0.0.1:${this.port}`);
     }
 
     isEngaged(): boolean {
@@ -68,6 +71,7 @@ export class LocalQuotaClient {
     disengage(): void {
         this.port = 0;
         this.token = '';
+        this.protocol = 'http';
     }
 
     /** 拉取一次配额快照（同时拉取用户状态与分类配额汇总） */
@@ -102,6 +106,7 @@ export class LocalQuotaClient {
             }
 
             const data = JSON.stringify(payload);
+            const client = this.protocol === 'https' ? https : http;
             const opts: https.RequestOptions = {
                 hostname: LOCAL_HOST,
                 port: this.port,
@@ -119,7 +124,7 @@ export class LocalQuotaClient {
                 agent: false, // 绕过代理，直接连接 loopback
             };
 
-            const req = https.request(opts, res => {
+            const req = client.request(opts, res => {
                 const chunks: Buffer[] = [];
                 let received = 0;
 
